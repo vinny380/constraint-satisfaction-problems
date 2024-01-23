@@ -85,19 +85,56 @@ An example of a 3x3 puzzle would be defined as:
 
 from cspbase import *
 
+
+b = (6, [(11, [(1, 1), (2, 1)], '+'), (3, [(1, 2), (2, 2)], '*'), (20, [(1, 3), (2, 3), (3, 3)], '*'),
+        (2, [(1, 4), (1, 5)], '-'), (6, [(1, 6), (2, 6)], '/'), (6, [(2, 4), (2, 5)], '*'),
+        (5, [(3, 1), (4, 1)], '+'), (40, [(3, 2), (4, 2), (5, 2)], '*'), (10, [(3, 4), (4, 4)], '+'),
+        (10, [(3, 5), (3, 6)], '*'), (3, [(4, 3), (5, 3)], '-'), (8, [(4, 5), (4, 6), (5, 6)], '+'),
+        (1, [(5, 1), (6, 1), (6, 2)], '-'), (11, [(5, 4), (5, 5)], '+'), (1, [(6, 3), (6, 4)], '-'),
+        (2, [(6, 5), (6, 6)], '-')])
+
+
 def binary_ne_grid(cagey_grid):
     ##IMPLEMENT
     # Create n^n variables
-    variables = []
-    for i in range(cagey_grid):
-        for k in range(cagey_grid):
-            v = Variable(str(i+1)+str(k+1), [n for n in range(0, cagey_grid**2)])
-            variables.append(v)
+    vars = []
+    operations = []
+    size = cagey_grid[0]
+    cages = cagey_grid[1]
     
-    for v in variables:
-        print(v.name)
+    # Accessing the individual cage element        
+    for element in cages:
+        target, tuple_list, op = element
+        print(f"Target: {target}\nCells: {tuple_list}\nOperation: {op}\n")
+        temp = []
+        for tuple_element in tuple_list:
+            cell_variable = Variable(f"Cell{str(tuple_element)}", [n for n in range(1, size+1)])
+            vars.append(cell_variable)
+            temp.append(cell_variable)
+        #TODO modify the domain below to string somehow, gotta figure what string.
+        operand_variable = Variable(f"Cage_op({target}:{op}:{temp})", [n for n in range(1, size+1)])
+        operations.append(operand_variable)
+        temp.clear()
+
+        
+
+        #TODO find satisfiable values for the tuple_list given the operation and target.
+    # all_diff = Constraint("binary-not-equal", vars)
+
     
-    csp = CSP("BINARY__NE_GRID", variables)
+
+    # all_diff.add_satisfying_tuples([(1,2), (3,2)])
+    # print(all_diff.check_tuple((1, 2)))
+
+
+    # for element in cages:
+    #     print(element)
+
+    
+    # for v in vars:
+
+    
+    csp = CSP("BINARY__NE_GRID", vars)
     
 
     ## return [[o, x] for (o, x) in itertools.product(dom, repeat=2) if o != x]
@@ -123,6 +160,7 @@ def cagey_csp_model(cagey_grid):
     pass
 
 def get_relevant_cells(cell, variables):
+    """Helper function"""
     c_x = int(cell.name[0])
     c_y = int(cell.name[1])
 
@@ -137,6 +175,6 @@ def get_relevant_cells(cell, variables):
 
 
 def main():
-    binary_ne_grid(3)
+    binary_ne_grid(b)
 
 main()
