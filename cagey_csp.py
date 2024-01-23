@@ -87,7 +87,31 @@ from cspbase import *
 
 def binary_ne_grid(cagey_grid):
     ##IMPLEMENT
-    pass
+    # Create n^n variables
+    variables = []
+    for i in range(cagey_grid):
+        for k in range(cagey_grid):
+            v = Variable(str(i+1)+str(k+1), [n for n in range(0, cagey_grid**2)])
+            variables.append(v)
+    
+    for v in variables:
+        print(v.name)
+    
+    csp = CSP("BINARY__NE_GRID", variables)
+    
+
+    ## return [[o, x] for (o, x) in itertools.product(dom, repeat=2) if o != x]
+    #TODO: add constraints
+    
+
+
+    # go over every variable
+    # add respective contraints to csp
+
+    # solve
+    
+
+
 
 
 def nary_ad_grid(cagey_grid):
@@ -97,3 +121,22 @@ def nary_ad_grid(cagey_grid):
 def cagey_csp_model(cagey_grid):
     ##IMPLEMENT
     pass
+
+def get_relevant_cells(cell, variables):
+    c_x = int(cell.name[0])
+    c_y = int(cell.name[1])
+
+    relevant_vars = []
+    for v in variables:
+        v_x = int(v.name[0])
+        v_y = int(v.name[1])
+        if v_y == c_y or v_x == c_x:
+            relevant_vars.append(v)
+
+    return relevant_vars
+
+
+def main():
+    binary_ne_grid(3)
+
+main()
