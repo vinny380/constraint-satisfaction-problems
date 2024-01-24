@@ -1,4 +1,5 @@
 from collections import deque 
+from cspbase import *
 # =============================
 # Student Names:
 # Group ID:
@@ -119,10 +120,30 @@ def prop_GAC(csp, newVar=None):
     #IMPLEMENT
     queue = deque([])
 
-    for arc in csp:
+    list_of_cons = csp.get_all_cons()
+    for arc in list_of_cons:
         queue.append(arc)
-    # while 
 
+    while len(queue) > 0:
+        pass
+
+
+def remove_incosistent_valus(x_i, x_j):
+    removed = False
+    domain_xi = x_i.domain()
+    domain_xj = x_j.domain()
+    for element in domain_xi:
+        if element not in domain_xj:
+            pass
+    pass
+
+def allows(domain_xi, domain_xj):
 
 
     pass
+
+
+import cagey_csp
+b2 = (3, [(3,[(1,1), (2,1)],"+"),(1, [(1,2)], '?'), (8, [(1,3), (2,3), (2,2)], "+"), (3, [(3,1)], '?'), (3, [(3,2), (3,3)], "+")])
+csp, vars = cagey_csp.binary_ne_grid(b2)
+prop_GAC(csp)

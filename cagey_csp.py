@@ -88,7 +88,7 @@ An example of a 3x3 puzzle would be defined as:
 '''
 
 from cspbase import *
-from propagators import *
+# from propagators import *
 from heuristics import *
 
 
@@ -130,7 +130,6 @@ def binary_ne_grid(cagey_grid):
     satisfying_tuples = itertools.permutations(domain, r = size)
 
     for constraint in constraints:
-        print(constraint)
         constraint.add_satisfying_tuples(satisfying_tuples)
     
     csp = CSP('binary_ne_grid', vars)
