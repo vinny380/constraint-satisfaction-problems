@@ -1,5 +1,6 @@
 from collections import deque 
 from cspbase import *
+import itertools
 # =============================
 # Student Names:
 # Group ID:
@@ -119,28 +120,61 @@ def prop_GAC(csp, newVar=None):
        constraints containing newVar on GAC Queue'''
     #IMPLEMENT
     queue = deque([])
+    queue_of_variables = deque([])
+    list_of_cons = []
+    
+    if newVar is None:
+        list_of_cons = csp.get_all_cons()
+    else:
+        list_of_cons = csp.get_cons_with_var(newVar)
 
-    list_of_cons = csp.get_all_cons()
-    for arc in list_of_cons:
-        queue.append(arc)
+    perm_list = itertools.product(list_of_cons, repeat = 2)
 
+    for perm in perm_list:
+        queue.append(perm)
+        
     while len(queue) > 0:
-        pass
+        x_i, x_j = queue.popleft()
+        if remove_inconsistent_value(x_i, x_j):
+            for variable in x_i.get_scope():
+                list_of_contraints_with_variable = csp.get_cons_with_var(variable)
+                for element in list_of_contraints_with_variable:
+                    print(element)
+                    queue.append((element, x_i))
+
+    return csp
 
 
-def remove_incosistent_valus(x_i, x_j):
+def remove_inconsistent_value(x_i, x_j):
     removed = False
-    domain_xi = x_i.domain()
-    domain_xj = x_j.domain()
-    for element in domain_xi:
-        if element not in domain_xj:
-            pass
-    pass
+    # list of the variables in both contraints
+    variables_xi = x_i.get_scope() 
+    variables_xj = x_j.get_scope()  
+    x_counter = 0
+    for variable_x in variables_xi:
+        domain_xi = variable_x.domain()
+        y_counter = 0
+        for variable_y in variables_xj:
+            domain_xj = variable_y.domain()
+            if (x_i.check_var_val(variable_x, domain_xj[y_counter])):
+                #NOTE remove element
+                removed = True
+            else:
+                break
+            y_counter += 1
+            if y_counter >= len(domain_xj):
+                break
+        x_counter += 1
 
-def allows(domain_xi, domain_xj):
+    return removed
 
-
-    pass
+    # for variable_x in domain_xi:
+    #     for variable_j in domain_xj:
+    #         tuple_element = (variable_x, variable_j)
+    #         print((x_i.check_tuple(tuple_element)))
+    #         if (x_i.check_tuple(tuple_element)):
+    #             removed = True
+    return removed
 
 
 import cagey_csp
