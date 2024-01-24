@@ -1,3 +1,7 @@
+import itertools
+
+
+# 
 # =============================
 # Student Names:
 # Group ID:
@@ -84,6 +88,8 @@ An example of a 3x3 puzzle would be defined as:
 '''
 
 from cspbase import *
+from propagators import *
+from heuristics import *
 
 
 b = (6, [(11, [(1, 1), (2, 1)], '+'), (3, [(1, 2), (2, 2)], '*'), (20, [(1, 3), (2, 3), (3, 3)], '*'),
@@ -93,62 +99,45 @@ b = (6, [(11, [(1, 1), (2, 1)], '+'), (3, [(1, 2), (2, 2)], '*'), (20, [(1, 3), 
         (1, [(5, 1), (6, 1), (6, 2)], '-'), (11, [(5, 4), (5, 5)], '+'), (1, [(6, 3), (6, 4)], '-'),
         (2, [(6, 5), (6, 6)], '-')])
 
+b2 = (3, [(3,[(1,1), (2,1)],"+"),(1, [(1,2)], '?'), (8, [(1,3), (2,3), (2,2)], "+"), (3, [(3,1)], '?'), (3, [(3,2), (3,3)], "+")])
 
 def binary_ne_grid(cagey_grid):
-    ##IMPLEMENT
     # Create n^n variables
     vars = []
-    operations = []
     size = cagey_grid[0]
     cages = cagey_grid[1]
-    
-    # Accessing the individual cage element        
-    for element in cages:
-        target, tuple_list, op = element
-        print(f"Target: {target}\nCells: {tuple_list}\nOperation: {op}\n")
-        temp = []
-        for tuple_element in tuple_list:
-            cell_variable = Variable(f"Cell{str(tuple_element)}", [n for n in range(1, size+1)])
+    domain = [n for n in range(1, size+1)]
+
+    for row in range(size):
+        for column in range(size):
+            cell_variable = Variable(f"Cell({str(row+1)},{str(column+1)})", domain)
             vars.append(cell_variable)
-            temp.append(cell_variable)
-        #TODO modify the domain below to string somehow, gotta figure what string.
-        operand_variable = Variable(f"Cage_op({target}:{op}:{temp})", [n for n in range(1, size+1)])
-        operations.append(operand_variable)
-        temp.clear()
 
-        
+    constraints = []
 
-        #TODO find satisfiable values for the tuple_list given the operation and target.
-    # all_diff = Constraint("binary-not-equal", vars)
+    # add rows
+    for i in range(size):
+        scope = get_relevant_row(i, vars)
+        constraint = Constraint(f"Row{i}", scope)
+        constraints.append(constraint)
 
+    # add columns
+    for i in range(size):
+        scope = get_relevant_col(i, vars)
+        constraint = Constraint(f"Col{i}", scope)
+        constraints.append(constraint)
+
+    satisfying_tuples = itertools.permutations(domain, r = size)
+
+    for constraint in constraints:
+        print(constraint)
+        constraint.add_satisfying_tuples(satisfying_tuples)
     
+    csp = CSP('binary_ne_grid', vars)
+    for constraint in constraints:
+        csp.add_constraint(constraint)
 
-    # all_diff.add_satisfying_tuples([(1,2), (3,2)])
-    # print(all_diff.check_tuple((1, 2)))
-
-
-    # for element in cages:
-    #     print(element)
-
-    
-    # for v in vars:
-
-    
-    csp = CSP("BINARY__NE_GRID", vars)
-    
-
-    ## return [[o, x] for (o, x) in itertools.product(dom, repeat=2) if o != x]
-    #TODO: add constraints
-    
-
-
-    # go over every variable
-    # add respective contraints to csp
-
-    # solve
-    
-
-
+    return csp, vars
 
 
 def nary_ad_grid(cagey_grid):
@@ -159,19 +148,46 @@ def cagey_csp_model(cagey_grid):
     ##IMPLEMENT
     pass
 
-def get_relevant_cells(cell, variables):
-    """Helper function"""
-    c_x = int(cell.name[0])
-    c_y = int(cell.name[1])
 
-    relevant_vars = []
+
+
+
+
+
+#_____________________________HELPER FUNCTIONS_____________________________
+def get_relevant_row(row, variables):
+    rel_vars = []
     for v in variables:
-        v_x = int(v.name[0])
-        v_y = int(v.name[1])
-        if v_y == c_y or v_x == c_x:
-            relevant_vars.append(v)
+        # Cell(6, 4)
+        x = int(v.name[5]) # 6
+        y = int(v.name[7]) # 4
+        # add all elements in same row
+        if x == row+1: # i 0 based, n is not
+            rel_vars.append(v)
 
-    return relevant_vars
+    unsorted = [(v, y) for v in rel_vars]
+    sorted_vars = sorted(unsorted, key=lambda x: x[1])
+    rel_vars = [f[0] for f in sorted_vars]
+
+    return rel_vars
+
+def get_relevant_col(col, variables):
+    rel_vars = []
+    for v in variables:
+        # Var-Cell(6, 4)
+        x = int(v.name[5]) # 6
+        y = int(v.name[7]) # 4
+        if y == col+1: # i 0 based, n is not
+            rel_vars.append(v)
+    unsorted = [(v, x) for v in rel_vars]
+    sorted_variables = sorted(unsorted, key=lambda x: x[1])
+    rel_vars = [f[0] for f in sorted_variables]
+
+    return rel_vars
+
+
+
+
 
 
 def main():

@@ -30,6 +30,19 @@ var_ordering == a function with the following template
 def ord_dh(csp):
     ''' return variables according to the Degree Heuristic '''
     # IMPLEMENT
+
+    #  unassigned_vars = get all unassigned variables from csp
+    # max_degree = -1
+    # var_with_max_degree = None
+
+    # for each variable in unassigned_vars
+    #     degree = count of constraints on this variable affecting other unassigned variables
+
+    #     if degree > max_degree
+    #         max_degree = degree
+    #         var_with_max_degree = variable
+
+    # return var_with_max_degree
     pass
 
 def ord_mrv(csp):

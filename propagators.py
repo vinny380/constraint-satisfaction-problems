@@ -1,3 +1,4 @@
+from collections import deque 
 # =============================
 # Student Names:
 # Group ID:
@@ -91,8 +92,24 @@ def prop_FC(csp, newVar=None):
     '''Do forward checking. That is check constraints with
        only one uninstantiated variable. Remember to keep
        track of all pruned variable,value pairs and return '''
-    #IMPLEMENT
-    pass
+    prunings = []
+    for constraint in csp.get_cons_with_var(newVar):
+        if constraint.get_n_unasgn == 1:
+            
+            unasgn_var = constraint.get_unasgn_vars()[0]
+
+            for val in unasgn_var.domain():
+                if not constraint.has_support(newVar, newVar.get_assigned_value(), unasgn_var, val):
+                    unasgn_var.prune_value
+                    prunings.append((unasgn_var, val))
+
+            if unasgn_var.cur_domain_size() == 0:
+                return False, prunings
+        
+    return True, prunings
+
+
+
 
 
 def prop_GAC(csp, newVar=None):
@@ -100,4 +117,12 @@ def prop_GAC(csp, newVar=None):
        processing all constraints. Otherwise we do GAC enforce with
        constraints containing newVar on GAC Queue'''
     #IMPLEMENT
+    queue = deque([])
+
+    for arc in csp:
+        queue.append(arc)
+    # while 
+
+
+
     pass
