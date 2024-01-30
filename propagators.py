@@ -94,15 +94,23 @@ def prop_FC(csp, newVar=None):
     '''Do forward checking. That is check constraints with
        only one uninstantiated variable. Remember to keep
        track of all pruned variable,value pairs and return '''
+    queue = dequeue()
+    if newVar is None:
+        for con in csp.get_all_cons():
+            queue.append(con)
+    else:
+        for con in csp.get_cons_with_var(newVar):
+            queue.append(con)
+
     prunings = []
-    for constraint in csp.get_cons_with_var(newVar):
-        if constraint.get_n_unasgn == 1:
+    for constraint in queue:
+        if constraint.get_n_unasgn() == 1:
             
             unasgn_var = constraint.get_unasgn_vars()[0]
 
             for val in unasgn_var.domain():
                 if not constraint.has_support(newVar, newVar.get_assigned_value(), unasgn_var, val):
-                    unasgn_var.prune_value
+                    unasgn_var.prune_value(val)
                     prunings.append((unasgn_var, val))
 
             if unasgn_var.cur_domain_size() == 0:
@@ -119,62 +127,43 @@ def prop_GAC(csp, newVar=None):
        processing all constraints. Otherwise we do GAC enforce with
        constraints containing newVar on GAC Queue'''
     #IMPLEMENT
-    queue = deque([])
-    queue_of_variables = deque([])
-    list_of_cons = []
-    
+
+    queue = deque()
+    pruned = []
+
     if newVar is None:
-        list_of_cons = csp.get_all_cons()
+        for con in csp.get_all_cons():
+            queue.append(con)
     else:
-        list_of_cons = csp.get_cons_with_var(newVar)
-
-    perm_list = itertools.product(list_of_cons, repeat = 2)
-
-    for perm in perm_list:
-        queue.append(perm)
+        for con in csp.get_cons_with_var(newVar):
+            queue.append(con)
         
-    while len(queue) > 0:
-        x_i, x_j = queue.popleft()
-        if remove_inconsistent_value(x_i, x_j):
-            for variable in x_i.get_scope():
-                list_of_contraints_with_variable = csp.get_cons_with_var(variable)
-                for element in list_of_contraints_with_variable:
-                    print(element)
-                    queue.append((element, x_i))
+    while queue:
+        constraint = queue.popleft()
 
-    return csp
+        for variable in constraint.get_scope():
+            ## this part is basically the "if remove inconsistent values"
+            for value in variable.cur_domain():
+
+                if value_supported(constraint, variable, value, pruned):
+
+                    variable.prune_value(value)
+                    pruned.append((variable, value))
+
+                ## remove inconsistent values end
+                    
+                    #for each neighbour
+                    for neighbour in csp.get_cons_with_var(variable):
+                        queue.append(neighbour)
+                    
+
+    return True, pruned
 
 
-def remove_inconsistent_value(x_i, x_j):
-    removed = False
-    # list of the variables in both contraints
-    variables_xi = x_i.get_scope() 
-    variables_xj = x_j.get_scope()  
-    x_counter = 0
-    for variable_x in variables_xi:
-        domain_xi = variable_x.domain()
-        y_counter = 0
-        for variable_y in variables_xj:
-            domain_xj = variable_y.domain()
-            if (x_i.check_var_val(variable_x, domain_xj[y_counter])):
-                #NOTE remove element
-                removed = True
-            else:
-                break
-            y_counter += 1
-            if y_counter >= len(domain_xj):
-                break
-        x_counter += 1
 
-    return removed
+def value_supported(constraint, variable, value, pruned):
+    return (not constraint.has_support(variable, value)) and ((variable, value) not in pruned)
 
-    # for variable_x in domain_xi:
-    #     for variable_j in domain_xj:
-    #         tuple_element = (variable_x, variable_j)
-    #         print((x_i.check_tuple(tuple_element)))
-    #         if (x_i.check_tuple(tuple_element)):
-    #             removed = True
-    return removed
 
 
 import cagey_csp

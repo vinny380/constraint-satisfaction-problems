@@ -31,26 +31,27 @@ def ord_dh(csp):
     ''' return variables according to the Degree Heuristic '''
     # IMPLEMENT
 
+    
+    max_degree = float("-inf")
     max_degree_var = None
-
-    for var in csp.get_all_unasgn_vars:
+    for var in csp.get_all_unasgn_vars():
         degree = 0
-        for constraint in csp.get_cons_with_var:
+        for constraint in csp.get_cons_with_var(var):
             if constraint.get_n_unasgn() > 1:
                 degree += 1
         if degree > max_degree:
             max_degree = degree
-            var_with_max_degree = var
+            max_degree_var = var
 
-    return var_with_max_degree
+    return max_degree_var
 
 def ord_mrv(csp):
     ''' return variable according to the Minimum Remaining Values heuristic '''
     # IMPLEMENT
-    min_domain_size = int('-inf')
+    min_domain_size = float("inf")
     min_var = None
 
-    for var in csp.get_all_unasgn_vars:
+    for var in csp.get_all_unasgn_vars():
         domain_size = var.cur_domain_size()
         
         if domain_size <= min_domain_size:
