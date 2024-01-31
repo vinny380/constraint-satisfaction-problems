@@ -90,11 +90,18 @@ def prop_BT(csp, newVar=None):
                 return False, []
     return True, []
 
+
+
 def prop_FC(csp, newVar=None):
     '''Do forward checking. That is check constraints with
        only one uninstantiated variable. Remember to keep
-       track of all pruned variable,value pairs and return '''
-    queue = dequeue()
+       track of all pruned variable,value pairs and return'''
+    
+    '''
+    - Filtering: Keep track of domains for unassigned variables and cross off bad options
+    - Forward checking: Cross off values that violate a constraint when added to the existing assignment
+    '''
+    queue = deque()
     if newVar is None:
         for con in csp.get_all_cons():
             queue.append(con)
@@ -103,22 +110,20 @@ def prop_FC(csp, newVar=None):
             queue.append(con)
 
     prunings = []
+    filtering = []
     for constraint in queue:
         if constraint.get_n_unasgn() == 1:
-            
-            unasgn_var = constraint.get_unasgn_vars()[0]
+            unassigned_variable = (constraint.get_unasgn_vars())[0]
+            filtering.append((unassigned_variable, unassigned_variable.cur_domain()))
 
-            for val in unasgn_var.domain():
-                if not constraint.has_support(newVar, newVar.get_assigned_value(), unasgn_var, val):
-                    unasgn_var.prune_value(val)
-                    prunings.append((unasgn_var, val))
+            for domain_value in unassigned_variable.cur_domain():
+                if not constraint.check_var_val(newVar, newVar.get_assigned_value()):
+                    unassigned_variable.prune_value(domain_value)
+                    prunings.append((unassigned_variable, domain_value))
 
-            if unasgn_var.cur_domain_size() == 0:
+            if unassigned_variable.cur_domain_size() == 0:
                 return False, prunings
-        
     return True, prunings
-
-
 
 
 
@@ -152,7 +157,7 @@ def prop_GAC(csp, newVar=None):
 
                 ## remove inconsistent values end
                     
-                    #for each neighbour
+                    # for each neighbour
                     for neighbour in csp.get_cons_with_var(variable):
                         queue.append(neighbour)
                     
@@ -162,11 +167,4 @@ def prop_GAC(csp, newVar=None):
 
 
 def value_supported(constraint, variable, value, pruned):
-    return (not constraint.has_support(variable, value)) and ((variable, value) not in pruned)
-
-
-
-import cagey_csp
-b2 = (3, [(3,[(1,1), (2,1)],"+"),(1, [(1,2)], '?'), (8, [(1,3), (2,3), (2,2)], "+"), (3, [(3,1)], '?'), (3, [(3,2), (3,3)], "+")])
-csp, vars = cagey_csp.binary_ne_grid(b2)
-prop_GAC(csp)
+    return (not constraint.check_var_val(variable, value)) and ((variable, value) not in pruned)

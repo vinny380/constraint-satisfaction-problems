@@ -1,11 +1,11 @@
 # =============================
-# Student Names:
 # Group ID:
 # Date:
 # =============================
 # CISC 352 - W23
 # heuristics.py
 # desc:
+# Student Names:
 #
 
 
