@@ -95,12 +95,9 @@ def prop_BT(csp, newVar=None):
 def prop_FC(csp, newVar=None):
     '''Do forward checking. That is check constraints with
        only one uninstantiated variable. Remember to keep
-       track of all pruned variable,value pairs and return'''
+       track of all pruned variable, value pairs and return'''
+    # Implement
     
-    '''
-    - Filtering: Keep track of domains for unassigned variables and cross off bad options
-    - Forward checking: Cross off values that violate a constraint when added to the existing assignment
-    '''
     queue = deque()
     if newVar is None:
         for con in csp.get_all_cons():
@@ -110,17 +107,22 @@ def prop_FC(csp, newVar=None):
             queue.append(con)
 
     prunings = []
-    filtering = []
     for constraint in queue:
+        # only consider contraints with one unassigned variable.
         if constraint.get_n_unasgn() == 1:
+            # getting unassinged vairable
             unassigned_variable = (constraint.get_unasgn_vars())[0]
-            filtering.append((unassigned_variable, unassigned_variable.cur_domain()))
 
+            # Now we iterate each value in the domain of the variable.
             for domain_value in unassigned_variable.cur_domain():
-                if not constraint.check_var_val(newVar, newVar.get_assigned_value()):
+
+                # Test if the domain value doesn't satisfy all constraints.
+                if not constraint.check_var_val(unassigned_variable, domain_value):
+                    # if the domain value doesn't satisfy all constraints we prune it from the domain.
                     unassigned_variable.prune_value(domain_value)
                     prunings.append((unassigned_variable, domain_value))
 
+            #If no satisfiable values found, we return false.
             if unassigned_variable.cur_domain_size() == 0:
                 return False, prunings
     return True, prunings
