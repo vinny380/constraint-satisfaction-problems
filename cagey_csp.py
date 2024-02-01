@@ -14,7 +14,7 @@ import itertools
 
 #Look for #IMPLEMENT tags in this file.
 '''
-b
+
 '''
 
 from cspbase import *
@@ -71,53 +71,44 @@ def binary_ne_grid(cagey_grid):
 
 
 def nary_ad_grid(cagey_grid):
-    ## IMPLEMENT
-    pass
+    # Create n^n variables
+    vars = []
+    size, grid = cagey_grid  # Unpack the size from the board definition
+
+    domain = list(range(1, size + 1))
+
+    for row in range(size):
+        for column in range(size):
+            cell_variable = Variable(f"Cell({str(row+1)},{str(column+1)})", domain)
+            vars.append(cell_variable)
+
+    constraints = []
+    satisfying_tuples = list(itertools.permutations(domain, r = size))
+
+    # add rows
+    for i in range(size):
+        # scope = get_relevant_row(i, vars)
+        scope = [variable for variable in vars if int(variable.name.split('(')[1].split(',')[1].rstrip(')')) == i+1]
+        constraint = Constraint(f"Row{i+1}", scope)
+        constraint.add_satisfying_tuples(satisfying_tuples)
+        constraints.append(constraint)
+
+    # add columns
+    for i in range(size):
+        scope = [variable for variable in vars if int(variable.name.split('(')[1].split(',')[0]) == i+1]
+        constraint = Constraint(f"Col{i+1}", scope)
+        constraint.add_satisfying_tuples(satisfying_tuples)
+        constraints.append(constraint)
+
+        
+    csp = CSP('nary_ad_grid', vars)
+    for constraint in constraints:
+        csp.add_constraint(constraint)
+
+    return csp, vars
+
+
 
 def cagey_csp_model(cagey_grid):
     ##IMPLEMENT
     pass
-
-
-
-
-
-
-
-#_____________________________HELPER FUNCTIONS_____________________________
-def get_relevant_row(row, variables):
-    relevant_variables = []
-    for variable in variables:
-        # Cell(6, 4)
-        x = int(variable.name[5]) # 6
-        y = int(variable.name[7]) # 4
-        # add all elements in same row
-        if x == row+1: # i 0 based, n is not
-            relevant_variables.append(variable)
-
-    unsorted = [(v, y) for v in relevant_variables]
-    sorted_vars = sorted(unsorted, key=lambda x: x[1])
-    relevant_variables = [f[0] for f in sorted_vars]
-
-    return relevant_variables
-
-def get_relevant_col(col, variables):
-    relevant_variables = []
-    for variable in variables:
-        # Var-Cell(6, 4)
-        x = int(variable.name[5]) # 6
-        y = int(variable.name[7]) # 4
-        if y == col+1: # i 0 based, n is not
-            relevant_variables.append(variable)
-    unsorted = [(v, x) for v in relevant_variables]
-    sorted_variables = sorted(unsorted, key=lambda x: x[1])
-    relevant_variables = [f[0] for f in sorted_variables]
-
-    return relevant_variables
-
-
-
-
-
-
-binary_ne_grid(b2)
