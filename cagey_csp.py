@@ -48,23 +48,21 @@ def binary_ne_grid(cagey_grid):
     csp = CSP("binary_ne_grid", vars)
     satisfiable_tuples = list(itertools.permutations(domain, 2))
 
-    # Generate and add binary not-equal constraints for rows and columns
-    for base_row in range(grid_size):
-        # Generate row constraints
-        row_indices = [base_row * grid_size + i for i in range(grid_size)]
-        for cell1_index, cell2_index in itertools.combinations(row_indices, 2):
-            constraint_name = f"NE_{vars[cell1_index].name}_X_{vars[cell2_index].name}"
-            constraint = Constraint(constraint_name, [vars[cell1_index], vars[cell2_index]])
-            constraints.append(constraint)
+   # Add binary not-equal constraints for each row and column
+    for current_row in range(grid_size):
+        for current_col in range(grid_size):
+            # Row constraints
+            for comparing_cell in range(current_col + 1, grid_size):
+                row_constraint = Constraint(f"Row{current_row+1}_Cell{current_col+1}_NE_Cell{comparing_cell+1}", [vars[current_row*grid_size + current_col], vars[current_row*grid_size + comparing_cell]])
+                constraints.append(row_constraint)
 
-        
-        # Generate column constraints
-        col_indices = [i * grid_size + base_row for i in range(grid_size)]
-        for cell1_index, cell2_index in itertools.combinations(col_indices, 2):
-            constraint_name = f"NE_{vars[cell1_index].name}_X_{vars[cell2_index].name}"
-            constraint = Constraint(constraint_name, [vars[cell1_index], vars[cell2_index]])
-            constraints.append(constraint)
-    
+            # Column constraints
+            for comparing_cell in range(current_row + 1, grid_size):
+                col_constraint = Constraint(f"Col{current_col+1}_Cell{current_row+1}_NE_Cell{comparing_cell+1}", [vars[current_row*grid_size + current_col], vars[comparing_cell*grid_size + current_col]])
+                constraints.append(col_constraint)
+
+
+    #add satisfiable tuple to each constraint, and push it to the csp.
     for constraint in constraints:
         constraint.add_satisfying_tuples(satisfiable_tuples)
         csp.add_constraint(constraint)
