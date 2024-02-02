@@ -32,7 +32,9 @@ b = (6, [(11, [(1, 1), (2, 1)], '+'), (3, [(1, 2), (2, 2)], '*'), (20, [(1, 3), 
 b2 = (3, [(3,[(1,1), (2,1)],"+"),(1, [(1,2)], '?'), (8, [(1,3), (2,3), (2,2)], "+"), (3, [(3,1)], '?'), (3, [(3,2), (3,3)], "+")])
 
 def binary_ne_grid(cagey_grid):
-    grid_size, grid = cagey_grid  # Unpack the size from the board definition
+    #IMPLEMENT
+
+    grid_size, grid = cagey_grid 
     domain = list(range(1, grid_size + 1))
     
     vars = []
@@ -71,9 +73,9 @@ def binary_ne_grid(cagey_grid):
 
 
 def nary_ad_grid(cagey_grid):
-    # Create n^n variables
+    #IMPLEMENT
     vars = []
-    size, grid = cagey_grid  # Unpack the size from the board definition
+    size, grid = cagey_grid
 
     domain = list(range(1, size + 1))
 
@@ -111,4 +113,106 @@ def nary_ad_grid(cagey_grid):
 
 def cagey_csp_model(cagey_grid):
     ##IMPLEMENT
-    pass
+    #NOTE Cage_op(12:?:[Var-Cell(1,1), Var-Cell(1,2)])
+    size, grid = cagey_grid
+    domain = list(range(1, size+1))
+    operations_domain = ['?', '+', '-', '*', '/']
+    csp, vars = nary_ad_grid(cagey_grid) # get initial constraints and variables
+    
+    
+    for grid_element in grid:
+        operation_variables = []
+        target, variables, operation = grid_element
+        cell_variable = Variable(f"Cage_op({target}:{operation}:{', '.join([f'Var-Cell({x},{y})' for x, y in variables])})", operations_domain)
+        variable_name = cell_variable.name
+        operation_variables.append(cell_variable)
+        csp.add_var(cell_variable)
+
+        scope = [variable for variable in operation if variable == variable_name]
+        sat_tuples = get_op_sat_tuples(target, variables, operation, domain)
+        constraint = Constraint(f"Constraint_target:{target}, variables:{variables}, operation: {operation}", scope)
+        constraint.add_satisfying_tuples(sat_tuples)
+        csp.add_constraint(constraint)
+        
+
+
+
+def get_op_sat_tuples(target, variables, operation, domain):
+    x = 5
+    if operation=='+':
+        return get_add_sat_tuples(target, variables, domain)
+    elif operation == '-':
+        return get_sub_sat_tuples(target, variables, domain)
+    elif operation == '/':
+        return get_div_sat_tuples(target, variables, domain)
+    elif operation == '*':
+        return get_mult_sat_tuples(target, variables, domain)
+    elif operation == '?':
+        return get_question_sat_tuples(target, variables, domain)
+
+
+
+def get_add_sat_tuples(target, variables, domain):
+    # come up with valid solutions
+    all_totals = list(itertools.permutations(domain, len(variables)))
+    valid_tuples = []
+    for t in all_totals:
+        if sum(list(t)) == target:
+            valid_tuples.append(t)
+    print(f"Target= {target},\nValid tuples: {valid_tuples}\n")
+
+    return valid_tuples
+
+    
+def get_sub_sat_tuples(target, variables, domain):
+    all_tuples = list(itertools.permutations(domain, len(variables)))
+    valid_tuples = []
+    
+    for tup in all_tuples:
+        sub = tup[0]
+        for i in range(1,len(tup)):
+            sub-=tup[i]
+        if sub == int(target):
+            valid_tuples.append(tup)
+
+    return valid_tuples
+
+            
+def get_mult_sat_tuples(target, variables, domain):
+    all_tuples = list(itertools.permutations(domain, len(variables)))
+    valid_tuples = []
+    for tup in all_tuples:
+        product = 1
+        for num in tup:
+            product*=num
+
+        if product == int(target):
+            valid_tuples.append(tup)
+
+    return valid_tuples
+
+
+def get_div_sat_tuples(target, variables, domain):
+    all_tuples = list(itertools.permutations(domain, len(variables)))
+    valid_tuples = []
+    
+    for tup in all_tuples:
+        quotient = tup[0]
+        for i in range(1,len(tup)):
+            quotient/=tup[i]
+        if quotient == int(target):
+            valid_tuples.append(tup)
+
+    return valid_tuples
+
+def get_question_sat_tuples(target, variables, domain):    
+    summy = get_add_sat_tuples(target, variables, domain)
+    diffy = get_sub_sat_tuples(target, variables, domain)
+    divvy = get_div_sat_tuples(target, variables, domain)
+    multy = get_sub_sat_tuples(target, variables, domain)
+
+    return summy+diffy+divvy+multy
+
+
+
+cagey_csp_model(b)
