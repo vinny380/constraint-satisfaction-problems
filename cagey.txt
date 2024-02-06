@@ -1,0 +1,160 @@
+def cagey_csp_model(cagey_grid):
+    # things to do: construct a nary constraint
+    # All constraints:
+    # Row, col - n-ary
+    # 3. Kenken puzzle constraint:
+    # op([vars]) == target
+    # scope - cage -> cagey_grid([1][i])
+    # operation on cells with operator == target ([0] of looped)
+    # -> make helper fn for this
+    # put it all into a CSP
+
+    # === n-ary constraint, copied from prev function ===
+
+    grid_size = cagey_grid[0]
+    csp = CSP("Full-Cagey", [])  # initialise
+    domain = [v for v in range(1, grid_size + 1)]
+
+    # initialise Variables, add to CSP
+    variables = []
+    for i in itertools.product(range(1, grid_size + 1), repeat=2):
+        new_var = Variable(("Cell" + str(i)), domain)
+        variables.append(new_var)
+        csp.add_var(new_var)
+
+    # create scopes, create row n-ary constraint, add to CSP
+    for row in range(1, grid_size + 1):
+        row_scope = list()
+        for i in range(1, grid_size + 1):
+            name = "Cell({}, {})".format(row, i)
+            scope_temp = []
+            for var in variables:
+                # get Variable that matches name, to add to scope
+                if var.name == name:
+                    if var not in scope_temp:
+                        scope_temp.append(var)  # n values
+
+            row_scope.extend(scope_temp)
+            # create constraint for each ROW
+
+        cons = Constraint("N-ary-allDiff-Row({})".format(row), row_scope)
+
+        sat_tuple = [tup for tup in
+                     itertools.permutations(range(1, grid_size + 1), grid_size)]
+        cons.add_satisfying_tuples(sat_tuple)
+        csp.add_constraint(cons)
+
+    # create scopes, create column n-ary constraint, add to CSP
+    for col in range(1, grid_size + 1):
+        col_scope = list()
+        for i in range(1, grid_size + 1):
+            name = "Cell({}, {})".format(i, col)
+            scope_temp = []
+            for var in variables:
+                # get Variable that matches name, to add to scope
+                if var.name == name:
+                    if var not in scope_temp:
+                        scope_temp.append(var)  # n values
+
+            col_scope.extend(scope_temp)
+            # create constraint for each COLUMN
+
+        cons = Constraint("N-ary-allDiff-Column({})".format(col), col_scope)
+
+        sat_tuple = [tup for tup in
+                     itertools.permutations(range(1, grid_size + 1), grid_size)]
+        cons.add_satisfying_tuples(sat_tuple)
+        csp.add_constraint(cons)
+
+    # === cage constraints ===
+
+    cages = cagey_grid[1]
+
+    for cage in cages:
+        target = cage[0]         # target value
+        cage_vars = cage[1]      # list of cells
+        cage_op = cage[2]        # get cage operator
+        var_op_str = ""     # build string for naming cage operator variable
+        cage_scope = list()
+        # build cage constraint scope by looping over all variables in the cage
+
+        for i in range(len(cage_vars)):
+            var_name = "Cell" + str(cage_vars[i])
+            for var in variables:
+                if var.name == var_name:
+                    if var not in cage_scope:
+                        # just in case; though should be unique already
+                        cage_scope.append(var)
+                        var_op_str += "Var-Cell({},{}), "\
+                            .format(cage_vars[i][0], cage_vars[i][1])
+
+        # all cell vars added. Add operator var to scope
+        var_name_string = "Cage_op({}:{}:[{}])"\
+            .format(target, cage_op, var_op_str[0:-2])  # -2: strip final ', '
+
+        op_var = Variable(var_name_string, ['+', '-', '/', '*', '?'])
+        variables.append(op_var)
+        csp.add_var(op_var)
+        cage_scope.insert(0, op_var)
+        # Keeping var order same as Constraint name in A1 spec
+        cons = Constraint(var_name_string, cage_scope)
+        # since cons name doesn't matter, just naming it the same as the var
+
+        # get satisfying tuples for constraint by evaluating:
+        sat_tuples = eval_sat_tuples((len(cage_scope)-1), cage_op, target,
+                                     grid_size)
+        cons.add_satisfying_tuples(sat_tuples)
+        csp.add_constraint(cons)
+
+    return csp, variables
+
+
+def eval_sat_tuples(n, operator, target, grid_size) -> list:
+    """An aggregator function to evaluate the constraint,
+    returns a list of satisfying tuples [sat_tuples]
+    """
+    sat_tuples = list()
+    # n => no. of cell vars (i.e., excluding cage_op)
+    if n == 1:  # just 1 var, won't waste computation checking
+        return [(operator, target)]
+
+    # grid_size corresponds to highest value in var's (int) domain;
+    # n -> number of variables being assigned here (n-tuple)
+    for tup in itertools.product(range(1, grid_size + 1), repeat=n):
+        if (operator == '+') or (operator == '?'):
+            if sum(tup) == target:  # satisfies!
+                sat = ('+',) + tup
+                sat_tuples.append(sat)
+        if operator == '*' or (operator == '?'):
+            aggr = tup[0]  # manually multiplying bc my python version is 3.7 :(
+            for i in range(1, len(tup)):
+                aggr *= tup[i]
+            if aggr == target:
+                sat = ('*',) + tup
+                sat_tuples.append(sat)
+        if operator == '-' or (operator == '?'):
+            aggr = tup[0]
+            for i in range(1, len(tup)):
+                aggr -= tup[i]
+            if aggr == target:
+                # add all permutations of this to sat_tuples:
+                # i.e. (1, 2, 3), (1, 3, 2)... would all satisfy constraint
+                # if one of them did
+                p_list = [p for p in itertools.permutations(tup, n)]
+                sat = []
+                for p in p_list:
+                    sat.append(('-', ) + p)  # include operator
+                sat_tuples.extend(sat)
+        if operator == '/' or (operator == '?'):
+            aggr = tup[0]
+            for i in range(1, len(tup)):
+                aggr = int(aggr / tup[i])   # no fractions
+            if aggr == target:
+                # add all permutations of this to sat_tuples
+                p_list = [p for p in itertools.permutations(tup, n)]
+                sat = []
+                for p in p_list:
+                    sat.append(('/',) + p)  # include operator
+                sat_tuples.extend(sat)
+
+    return sat_tuples

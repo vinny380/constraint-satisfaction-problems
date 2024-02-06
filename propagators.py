@@ -2,11 +2,11 @@ from collections import deque
 from cspbase import *
 import itertools
 # =============================
-# Student Names:
-# Group ID:
+# Student Names: Vinicius Porfirio Purgato, Adam Clarke, Isaac Wood
+# Group ID: (A1) 60
 # Date:
 # =============================
-# CISC 352 - W23
+# CISC 352 - W24
 # propagators.py
 # desc:
 #
@@ -163,7 +163,7 @@ def prop_GAC(csp, newVar=None):
                     for neighbour in csp.get_cons_with_var(variable):
                         queue.append(neighbour)
                     
-
+    
     return True, pruned
 
 

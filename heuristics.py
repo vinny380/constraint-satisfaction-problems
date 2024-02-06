@@ -1,11 +1,11 @@
 # =============================
-# Group ID:
+# Group ID: (A1) 60
 # Date:
 # =============================
-# CISC 352 - W23
+# CISC 352 - W24
 # heuristics.py
 # desc:
-# Student Names:
+# Student Names: Vinicius Porfirio Purgato, Adam Clarke, Isaac Wood
 #
 
 
